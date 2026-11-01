@@ -20,7 +20,7 @@ const BOS_LESSONS_PROGRAM_META = '_bos_program_id';
 
 // Legacy product meta from the Sense in Motion plugin is still read.
 function bos_lessons_product_program_id($product_id) {
-    $id = bos_lessons_product_program_id($product_id);
+    $id = get_post_meta($product_id, BOS_LESSONS_PROGRAM_META, true);
     return $id !== '' ? $id : get_post_meta($product_id, '_sim_package_id', true);
 }
 
