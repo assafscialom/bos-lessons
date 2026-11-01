@@ -39,8 +39,8 @@ function bos_lessons_program_url($package_id, $name = '') {
 // Program shown by [bos_program] without id: /program/12-…/ (query var), else the current product's program.
 function bos_lessons_current_program_id() {
     $from_url = get_query_var('bos_program');
-    if ($from_url === '' && isset($_GET['bos_program'])) {
-        $from_url = sanitize_text_field(wp_unslash($_GET['bos_program']));
+    if ($from_url === '' && isset($_GET['bos_program'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only program id in the URL.
+        $from_url = sanitize_text_field(wp_unslash($_GET['bos_program'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     }
     if (ctype_digit((string) $from_url)) {
         return (string) $from_url;

@@ -9,7 +9,6 @@
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: bos-lessons
- * Domain Path: /languages
  * Requires at least: 5.8
  * Requires PHP: 7.4
  */
@@ -131,8 +130,9 @@ function bos_lessons_settings_page() {
     }
     $status = bos_lessons_api_key() === ''
         ? '<div class="notice notice-warning inline"><p>' . esc_html__('Enter your API key to connect this site to BOS.', 'bos-lessons') . '</p></div>'
+        /* translators: %d: BOS account number */
         : '<div class="notice notice-success inline"><p>' . sprintf(esc_html__('Connected to BOS account #%d.', 'bos-lessons'), bos_lessons_company_id()) . '</p></div>';
-    echo '<div class="wrap"><h1>' . esc_html__('BOS Lessons', 'bos-lessons') . '</h1>' . $status . '<form method="post" action="options.php">';
+    echo '<div class="wrap"><h1>' . esc_html__('BOS Lessons', 'bos-lessons') . '</h1>' . wp_kses_post($status) . '<form method="post" action="options.php">';
     settings_fields('bos_lessons');
     do_settings_sections('bos-lessons');
     submit_button();
@@ -151,7 +151,6 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), function ($links)
 /* ---------- Modules ---------- */
 
 add_action('plugins_loaded', function () {
-    load_plugin_textdomain('bos-lessons', false, dirname(plugin_basename(__FILE__)) . '/languages');
     // WooCommerce purchases -> programs in the app.
     if (class_exists('WooCommerce')) {
         require_once __DIR__ . '/includes/woocommerce.php';

@@ -20,8 +20,8 @@ function bos_lessons_product_for_package($package_id) {
         'post_status' => 'publish',
         'numberposts' => 1,
         'fields'      => 'ids',
-        'meta_key'    => BOS_LESSONS_PROGRAM_META,
-        'meta_value'  => (string) $package_id,
+        'meta_key'    => BOS_LESSONS_PROGRAM_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- one product per program, tiny table.
+        'meta_value'  => (string) $package_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
     ]);
     return $ids ? wc_get_product($ids[0]) : null;
 }

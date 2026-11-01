@@ -126,10 +126,12 @@ add_action('woocommerce_product_options_general_product_data', function () {
 });
 
 add_action('woocommerce_process_product_meta', function ($product_id) {
+    // phpcs:disable WordPress.Security.NonceVerification.Missing -- WooCommerce verified the product-save nonce before firing this hook.
     if (!isset($_POST[BOS_LESSONS_PROGRAM_META])) {
         return;
     }
     $value = sanitize_text_field(wp_unslash($_POST[BOS_LESSONS_PROGRAM_META]));
+    // phpcs:enable
     if ($value === '') {
         delete_post_meta($product_id, BOS_LESSONS_PROGRAM_META);
     } elseif (ctype_digit($value)) {
@@ -198,7 +200,7 @@ function bos_lessons_checkout_redirect() {
     }
     $order_id = absint(get_query_var('order-received'));
     $order    = $order_id ? wc_get_order($order_id) : null;
-    $key      = isset($_GET['key']) ? sanitize_text_field(wp_unslash($_GET['key'])) : '';
+    $key      = isset($_GET['key']) ? sanitize_text_field(wp_unslash($_GET['key'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the order key itself is the credential, checked below.
     if (!$order || !$key || !hash_equals($order->get_order_key(), $key)) {
         return;
     }
@@ -275,13 +277,13 @@ function bos_lessons_thankyou_box($order) {
 function bos_lessons_received_order() {
     $order_id = absint(get_query_var('order-received'));
     $order    = $order_id ? wc_get_order($order_id) : null;
-    $key      = isset($_GET['key']) ? sanitize_text_field(wp_unslash($_GET['key'])) : '';
+    $key      = isset($_GET['key']) ? sanitize_text_field(wp_unslash($_GET['key'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the order key itself is the credential.
     return $order && $key && hash_equals($order->get_order_key(), $key) ? $order : null;
 }
 
 // Classic thank-you template: top of the page.
 add_action('woocommerce_before_thankyou', function ($order_id) {
-    echo bos_lessons_thankyou_box(wc_get_order($order_id));
+    echo wp_kses_post(bos_lessons_thankyou_box(wc_get_order($order_id)));
 });
 
 // Block order-confirmation template (block themes): right after the status block at the top.
