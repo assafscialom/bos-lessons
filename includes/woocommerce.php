@@ -64,6 +64,16 @@ function bos_lessons_woo_call(array $payload) {
     return $data;
 }
 
+// Buy Now: checkout with the program added. If it is already in the cart (programs are sold one per
+// order), plain checkout, otherwise WooCommerce refuses with "You cannot add another ... to your cart".
+function bos_lessons_buy_url($product) {
+    $cart = function_exists('WC') && WC()->cart ? WC()->cart : null;
+    if ($cart && $cart->find_product_in_cart($cart->generate_cart_id($product->get_id()))) {
+        return wc_get_checkout_url();
+    }
+    return add_query_arg('add-to-cart', $product->get_id(), wc_get_checkout_url());
+}
+
 function bos_lessons_packages() {
     $cached = get_transient('bos_lessons_packages');
     if (is_array($cached)) {

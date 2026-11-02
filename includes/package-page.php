@@ -71,7 +71,7 @@ function bos_lessons_buy_box(array $package) {
     if (!$product) {
         return '';
     }
-    $buy = add_query_arg('add-to-cart', $product->get_id(), wc_get_checkout_url());
+    $buy = bos_lessons_buy_url($product);
     return bos_lessons_page_styles() . '<div class="bos-pkg"><h1 class="bos-pkg-title">' . esc_html($package['name']) . '</h1>'
         . '<div class="bos-pkg-price">' . wp_kses_post($product->get_price_html()) . '</div>'
         . '<div class="bos-pkg-buttons"><a class="bos-pkg-btn primary" href="' . esc_url($buy) . '">' . esc_html__('Buy Now', 'bos-lessons') . '</a>'
@@ -102,7 +102,7 @@ function bos_lessons_render_package_page(array $package, array $page) {
     if ($product) {
         $html .= '<div class="bos-pkg-price">' . wp_kses_post($product->get_price_html()) . '</div>';
         // Buy Now goes straight to checkout with the program in the cart.
-        $buy = add_query_arg('add-to-cart', $product->get_id(), wc_get_checkout_url());
+        $buy = bos_lessons_buy_url($product);
         $html .= '<div class="bos-pkg-buttons"><a class="bos-pkg-btn primary" href="' . esc_url($buy) . '">' . esc_html__('Buy Now', 'bos-lessons') . '</a>';
     } else {
         $html .= '<div class="bos-pkg-buttons">';

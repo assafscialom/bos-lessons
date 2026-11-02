@@ -114,7 +114,7 @@ function bos_lessons_programs_shortcode() {
         $html .= '<div class="bos-pkg-buttons" style="margin:0">';
         $html .= '<a class="bos-pkg-btn secondary" href="' . esc_url($url) . '">' . esc_html__('View program', 'bos-lessons') . '</a>';
         if ($product) {
-            $html .= '<a class="bos-pkg-btn primary" href="' . esc_url(add_query_arg('add-to-cart', $product->get_id(), wc_get_checkout_url())) . '">' . esc_html__('Buy Now', 'bos-lessons') . '</a>';
+            $html .= '<a class="bos-pkg-btn primary" href="' . esc_url(bos_lessons_buy_url($product)) . '">' . esc_html__('Buy Now', 'bos-lessons') . '</a>';
         }
         $html .= '</div></li>';
     }
