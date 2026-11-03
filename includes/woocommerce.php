@@ -74,6 +74,16 @@ function bos_lessons_buy_url($product) {
     return add_query_arg('add-to-cart', $product->get_id(), wc_get_checkout_url());
 }
 
+// Safety net for cached pages and stale links: adding a program that is already in the cart is a
+// no-op instead of an error notice (which the block checkout never shows, but which makes Place Order fail).
+add_filter('woocommerce_add_to_cart_validation', function ($passed, $product_id) {
+    if ($passed && get_post_meta($product_id, '_bos_program_id', true) && WC()->cart
+        && WC()->cart->find_product_in_cart(WC()->cart->generate_cart_id($product_id))) {
+        return false;
+    }
+    return $passed;
+}, 10, 2);
+
 function bos_lessons_packages() {
     $cached = get_transient('bos_lessons_packages');
     if (is_array($cached)) {
