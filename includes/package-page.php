@@ -15,13 +15,17 @@ function bos_lessons_product_for_package($package_id) {
     if ($current && get_post_type($current) === 'product' && (string) bos_lessons_product_program_id($current) === (string) $package_id) {
         return wc_get_product($current);
     }
+    // Both keys: products linked from the BOS dashboard or the old plugin carry _sim_package_id.
     $ids = get_posts([
         'post_type'   => 'product',
         'post_status' => 'publish',
         'numberposts' => 1,
         'fields'      => 'ids',
-        'meta_key'    => BOS_LESSONS_PROGRAM_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- one product per program, tiny table.
-        'meta_value'  => (string) $package_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+        'meta_query'  => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one product per program, tiny table.
+            'relation' => 'OR',
+            ['key' => BOS_LESSONS_PROGRAM_META, 'value' => (string) $package_id],
+            ['key' => '_sim_package_id', 'value' => (string) $package_id],
+        ],
     ]);
     return $ids ? wc_get_product($ids[0]) : null;
 }
