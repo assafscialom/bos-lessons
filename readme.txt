@@ -4,7 +4,7 @@ Tags: video lessons, audio lessons, woocommerce, yoga, online classes
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -88,6 +88,9 @@ Yes. The shortcodes work anywhere shortcodes do, and the thank-you box supports 
 5. Settings → BOS Lessons.
 
 == Changelog ==
+
+= 1.0.1 =
+* Price and Buy Now now appear for products linked with the older _sim_package_id key (migrated shops).
 
 = 1.0.0 =
 * First public release.
