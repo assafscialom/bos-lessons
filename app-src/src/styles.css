@@ -30,7 +30,7 @@
 #bos-app .bos-card p { margin-bottom: 16px; color: var(--bos-muted); }
 #bos-app .bos-signin { display: flex; flex-direction: column; gap: 14px; text-align: left; }
 #bos-app .bos-signin h2 { text-align: center; }
-#bos-app .bos-logo { width: 72px; height: 72px; object-fit: contain; align-self: center; }
+#bos-app .bos-logo { max-width: 200px; max-height: 80px; width: auto; height: auto; object-fit: contain; align-self: center; }
 #bos-app label { display: flex; flex-direction: column; gap: 6px; font-size: 0.875rem; font-weight: 500; color: var(--bos-text); }
 #bos-app input[type='email'], #bos-app input[type='password'], #bos-app .bos-search {
   font: inherit; font-size: 16px; color: var(--bos-text); background: #fff; border: 1px solid var(--bos-border); border-radius: 6px; padding: 11px 14px; width: 100%;

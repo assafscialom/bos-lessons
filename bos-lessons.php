@@ -3,7 +3,7 @@
  * Plugin Name: BOS Lessons
  * Plugin URI:  https://bos.work/plugin
  * Description: Sell video and audio lessons from your WordPress site. Embeds your BOS lesson library ([bos_app]), shows program pages ([bos_program], [bos_programs]) and opens programs bought through WooCommerce.
- * Version:     1.0.1
+ * Version:     1.0.2
  * Author:      IQDesk
  * Author URI:  https://bos.work
  * License:     GPL-2.0-or-later
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const BOS_LESSONS_VERSION = '1.0.1';
+const BOS_LESSONS_VERSION = '1.0.2';
 const BOS_LESSONS_OPTION  = 'bos_lessons';
 
 // Only these API endpoints can be reached through the proxy.
@@ -42,6 +42,7 @@ function bos_lessons_settings() {
         'api_key'  => trim((string) ($stored['api_key'] ?? '')),
         'api_url'  => trim((string) ($stored['api_url'] ?? '')),
         'shop_url' => trim((string) ($stored['shop_url'] ?? '')),
+        'logo_url' => trim((string) ($stored['logo_url'] ?? '')),
     ];
     foreach (['api_key' => ['BOS_LESSONS_API_KEY', 'SIM_APP_WOO_SECRET'], 'api_url' => ['BOS_LESSONS_API_URL', 'SIM_APP_API']] as $key => $constants) {
         foreach ($constants as $constant) {
@@ -79,6 +80,18 @@ function bos_lessons_api_url() {
 }
 
 // Where "All programs" links go: the setting, else the page that holds [bos_program(s)].
+// Logo on the sign-in screens: the setting, else the theme's site logo, else the site icon, else none.
+function bos_lessons_logo_url() {
+    $url = bos_lessons_settings()['logo_url'];
+    if ($url === '' && ($logo_id = (int) get_theme_mod('custom_logo'))) {
+        $url = (string) wp_get_attachment_image_url($logo_id, 'medium');
+    }
+    if ($url === '') {
+        $url = (string) get_site_icon_url(256);
+    }
+    return $url;
+}
+
 function bos_lessons_shop_url() {
     $url = bos_lessons_settings()['shop_url'];
     return $url !== '' ? $url : home_url('/' . (defined('BOS_LESSONS_PROGRAM_PAGE') ? BOS_LESSONS_PROGRAM_PAGE : 'program') . '/');
@@ -97,6 +110,7 @@ add_action('admin_init', function () {
                 'api_key'  => preg_replace('/[^A-Za-z0-9._\-]/', '', (string) ($input['api_key'] ?? '')),
                 'api_url'  => esc_url_raw(trim((string) ($input['api_url'] ?? ''))),
                 'shop_url' => esc_url_raw(trim((string) ($input['shop_url'] ?? ''))),
+                'logo_url' => esc_url_raw(trim((string) ($input['logo_url'] ?? ''))),
             ];
             delete_transient('bos_lessons_packages');
             delete_transient('bos_lessons_page_url');
@@ -107,6 +121,7 @@ add_action('admin_init', function () {
     $fields = [
         'api_key'  => [__('API key', 'bos-lessons'), __('From your BOS dashboard (Settings → WordPress). Required.', 'bos-lessons'), 'text'],
         'shop_url' => [__('Programs page URL', 'bos-lessons'), __('Where "All programs" links go. Leave empty to use the page that holds [bos_programs].', 'bos-lessons'), 'url'],
+        'logo_url' => [__('Logo URL', 'bos-lessons'), __('Shown above the sign-in form. Leave empty to use your site logo or site icon.', 'bos-lessons'), 'url'],
         'api_url'  => [__('API URL', 'bos-lessons'), __('Leave empty unless BOS support gave you a different address.', 'bos-lessons'), 'url'],
     ];
     foreach ($fields as $key => [$label, $help, $type]) {
@@ -235,6 +250,7 @@ function bos_lessons_app_shortcode() {
         'assetsUrl'       => $base,
         'companyId'       => (string) bos_lessons_company_id(),
         'siteName'        => get_bloginfo('name'),
+        'logoUrl'         => bos_lessons_logo_url(),
         // Locked programs link to their program page.
         'packageProducts' => function_exists('bos_lessons_package_products') ? bos_lessons_package_products() : new stdClass(),
         'shopUrl'         => bos_lessons_shop_url(),

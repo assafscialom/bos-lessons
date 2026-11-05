@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ASSETS, PASSWORD_RE, forgotPassword, getTerms, register, setPassword, verifyCode } from '../api';
+import { PASSWORD_RE, forgotPassword, getTerms, register, setPassword, verifyCode } from '../api';
+import { Logo } from '../Logo.jsx';
 import { useApp } from '../App.jsx';
 
 // Port of Account/SignUp.js + VerifyCode.js.
@@ -46,7 +47,7 @@ export function SignUp() {
   return (
     <div className="bos-center">
       <form className="bos-card bos-signin" onSubmit={submit} noValidate>
-        <img className="bos-logo" src={`${ASSETS}logo.png`} alt="" />
+        <Logo />
         <p className="bos-eyebrow" style={{ textAlign: 'center' }}>Online programs</p>
         <h2>Create account</h2>
         <label>
@@ -121,7 +122,7 @@ export function VerifyCode() {
   return (
     <div className="bos-center">
       <form className="bos-card bos-signin" onSubmit={submit}>
-        <img className="bos-logo" src={`${ASSETS}logo.png`} alt="" />
+        <Logo />
         <h2>Check your email</h2>
         <p className="bos-muted" style={{ textAlign: 'center' }}>
           We sent a 5-digit code to <strong>{account.email}</strong>.
@@ -175,7 +176,7 @@ export function ForgotPassword() {
   return (
     <div className="bos-center">
       <form className="bos-card bos-signin" onSubmit={submit}>
-        <img className="bos-logo" src={`${ASSETS}logo.png`} alt="" />
+        <Logo />
         <h2>Set a new password</h2>
         {sent ? (
           <p className="bos-muted" role="status" style={{ textAlign: 'center' }}>
@@ -278,7 +279,7 @@ export function SetPasswordPage() {
   return (
     <div className="bos-center">
       <div className="bos-card">
-        <img className="bos-logo" src={`${ASSETS}logo.png`} alt="" />
+        <Logo />
         <h2>Set a new password</h2>
         {account ? (
           <>

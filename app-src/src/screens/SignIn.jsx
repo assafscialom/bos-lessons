@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ASSETS, signIn } from '../api';
+import { signIn } from '../api';
+import { Logo } from '../Logo.jsx';
 import { useApp } from '../App.jsx';
 
 export default function SignIn() {
@@ -34,7 +35,7 @@ export default function SignIn() {
   return (
     <div className="bos-center">
       <form className="bos-card bos-signin" onSubmit={submit}>
-        <img className="bos-logo" src={`${ASSETS}logo.png`} alt="" />
+        <Logo />
         <p className="bos-eyebrow" style={{ textAlign: 'center' }}>Online lessons</p>
         <h2>Sign in</h2>
         <label>
