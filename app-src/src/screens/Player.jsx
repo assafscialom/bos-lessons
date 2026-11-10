@@ -106,9 +106,10 @@ export default function Player() {
     return onVideoPlay(videoRef.current, video.provider, () => markStartedRef.current());
   }, [video?.src, Boolean(packages)]);
 
-  // Lessons play only as part of a bought program: the one in the URL, or (favourites/history) any bought program with it.
+  // Lessons play only as part of a bought program: the one in the URL, or (lessons/favourites/history) any bought
+  // program with it. Free accounts play everything, also lessons that are in no program.
   const programsWithLesson = program ? [program] : (packages || []).filter(p => p.lessons?.some(l => String(l.lesson_id) === id));
-  if (packages && !programsWithLesson.some(p => isProgramOpen(p, purchased))) {
+  if (packages && purchased !== 'all' && !programsWithLesson.some(p => isProgramOpen(p, purchased))) {
     const forSale = programsWithLesson[0];
     return (
       <div className="bos-center">

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { findLessons, getBodyAreas, getPositions } from '../api';
 import { Tabs, useApp } from '../App.jsx';
 import { LessonList } from './Lessons.jsx';
+import { usePackages } from './Programs.jsx';
 
 // Port of features/FindLessons. Filters live in the URL so "back" from a lesson keeps the results.
 const LENGTHS = [{ value: 3, label: '~30' }, { value: 2, label: '~20' }, { value: 1, label: '~10' }];
@@ -31,6 +32,7 @@ function Chips({ legend, options, selected, onToggle }) {
 
 export default function FindLessons() {
   const { account, logout } = useApp();
+  usePackages(); // locks on the results, as in the Lessons list
   const [params, setParams] = useSearchParams();
   const [positions, setPositions] = useState(null);
   const [areas, setAreas] = useState(null);
@@ -110,7 +112,7 @@ export default function FindLessons() {
       {!loading && results && (
         <>
           <p className="bos-count bos-results-count" role="status">{results.length} lessons found</p>
-          <LessonList lessons={results} suffix={params.get('len') ? `?length=${params.get('len')}` : ''} />
+          <LessonList lessons={results} suffix={params.get('len') ? `?length=${params.get('len')}` : ''} locks />
         </>
       )}
     </div>

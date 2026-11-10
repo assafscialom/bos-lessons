@@ -3,7 +3,7 @@
  * Plugin Name: BOS Lessons
  * Plugin URI:  https://bos.work/plugin
  * Description: Sell video and audio lessons from your WordPress site. Embeds your BOS lesson library ([bos_lessons_app]), shows program pages ([bos_lessons_program], [bos_lessons_programs]) and opens programs bought through WooCommerce.
- * Version:     1.0.4
+ * Version:     1.0.5
  * Author:      IQDesk
  * Author URI:  https://bos.work
  * License:     GPL-2.0-or-later
@@ -17,8 +17,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const BOS_LESSONS_VERSION = '1.0.4';
+const BOS_LESSONS_VERSION = '1.0.5';
 const BOS_LESSONS_OPTION  = 'bos_lessons';
+// Optional sections of the web app besides Programs (always shown). Defaults = the behaviour before 1.0.5.
+const BOS_LESSONS_SECTIONS = ['lessons' => false, 'favourites' => true, 'history' => true];
 
 // Only these API endpoints can be reached through the proxy.
 const BOS_LESSONS_ENDPOINTS = [
@@ -43,6 +45,7 @@ function bos_lessons_settings() {
         'api_url'  => trim((string) ($stored['api_url'] ?? '')),
         'shop_url' => trim((string) ($stored['shop_url'] ?? '')),
         'logo_url' => trim((string) ($stored['logo_url'] ?? '')),
+        'sections' => bos_lessons_clean_sections($stored['sections'] ?? null),
     ];
     foreach (['api_key' => ['BOS_LESSONS_API_KEY', 'SIM_APP_WOO_SECRET'], 'api_url' => ['BOS_LESSONS_API_URL', 'SIM_APP_API']] as $key => $constants) {
         foreach ($constants as $constant) {
@@ -56,6 +59,15 @@ function bos_lessons_settings() {
     }
     $settings['api_url'] = trailingslashit($settings['api_url']);
     return $settings;
+}
+
+// Section switches: a stored array of 0/1 per section; anything missing (installs before 1.0.5) takes its default.
+function bos_lessons_clean_sections($stored) {
+    $out = [];
+    foreach (BOS_LESSONS_SECTIONS as $key => $default) {
+        $out[$key] = is_array($stored) && isset($stored[$key]) ? (bool) $stored[$key] : $default;
+    }
+    return $out;
 }
 
 // The API key: "<company id>.<secret>". The secret signs server-to-server calls; the company id selects the account.
@@ -111,6 +123,8 @@ add_action('admin_init', function () {
                 'api_url'  => esc_url_raw(trim((string) ($input['api_url'] ?? ''))),
                 'shop_url' => esc_url_raw(trim((string) ($input['shop_url'] ?? ''))),
                 'logo_url' => esc_url_raw(trim((string) ($input['logo_url'] ?? ''))),
+                // The form posts every section (hidden 0 + checkbox 1), so a missing key only comes from code: keep its default.
+                'sections' => array_map('intval', bos_lessons_clean_sections($input['sections'] ?? null)),
             ];
             delete_transient('bos_lessons_packages');
             delete_transient('bos_lessons_page_url');
@@ -137,6 +151,26 @@ add_action('admin_init', function () {
             );
         }, 'bos-lessons', 'bos_lessons_main');
     }
+    add_settings_field('bos_lessons_sections', __('Sections in the app', 'bos-lessons'), function () {
+        $labels = [
+            'lessons'    => __('Lessons — every lesson, with search. Lessons outside the student\'s programs are shown locked and lead to their program.', 'bos-lessons'),
+            'favourites' => __('Favourites', 'bos-lessons'),
+            'history'    => __('History — lessons the student played', 'bos-lessons'),
+        ];
+        $on = bos_lessons_settings()['sections'];
+        echo '<fieldset><legend class="screen-reader-text">' . esc_html__('Sections in the app', 'bos-lessons') . '</legend>';
+        echo '<label><input type="checkbox" checked disabled> ' . esc_html__('Programs (always shown)', 'bos-lessons') . '</label><br>';
+        foreach ($labels as $key => $label) {
+            $name = BOS_LESSONS_OPTION . '[sections][' . $key . ']';
+            printf(
+                '<input type="hidden" name="%1$s" value="0"><label><input type="checkbox" name="%1$s" value="1"%2$s> %3$s</label><br>',
+                esc_attr($name),
+                checked($on[$key], true, false),
+                esc_html($label)
+            );
+        }
+        echo '<p class="description">' . esc_html__('Tabs shown in [bos_lessons_app] besides Programs.', 'bos-lessons') . '</p></fieldset>';
+    }, 'bos-lessons', 'bos_lessons_main');
 });
 
 function bos_lessons_settings_page() {
@@ -254,6 +288,7 @@ function bos_lessons_app_shortcode() {
         // Locked programs link to their program page.
         'packageProducts' => function_exists('bos_lessons_package_products') ? bos_lessons_package_products() : new stdClass(),
         'shopUrl'         => bos_lessons_shop_url(),
+        'sections'        => bos_lessons_settings()['sections'],
     ]) . ';', 'before');
 
     return '<div id="bos-app"></div>';

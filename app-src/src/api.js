@@ -9,6 +9,12 @@ export const COMPANY_ID = String(CFG.companyId || '');
 export const PACKAGE_PRODUCTS = CFG.packageProducts || {};
 export const SHOP_URL = CFG.shopUrl || '/';
 export const buyUrl = packageId => PACKAGE_PRODUCTS[String(packageId)] || SHOP_URL;
+// Sections besides Programs, from Settings → BOS Lessons. Defaults match the plugin's (installs before 1.0.5).
+// Dev only: ?sections=lessons,history overrides them, to try each combination with ?mock.
+const devSections = import.meta.env.DEV && new URLSearchParams(location.search).get('sections');
+export const SECTIONS = devSections != null
+  ? Object.fromEntries(['lessons', 'favourites', 'history'].map(k => [k, devSections.split(',').includes(k)]))
+  : { lessons: false, favourites: true, history: true, ...CFG.sections };
 
 const ACCOUNT_KEY = '@ACCOUNT';
 const DEVICE_KEY = '@DEVICE_ID';

@@ -1,23 +1,27 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { HashRouter, Navigate, NavLink, Route, Routes } from 'react-router-dom';
-import { getAppData, getGeneralInfo, loadAccount, loginWithKey, ownedPrograms, saveAccount, takeLoginKeyFromUrl } from './api';
+import { SECTIONS, getAppData, getGeneralInfo, loadAccount, loginWithKey, ownedPrograms, saveAccount, takeLoginKeyFromUrl } from './api';
 import SignIn from './screens/SignIn.jsx';
 import { ForgotPassword, SetPasswordModal, SetPasswordPage, SignUp, VerifyCode } from './screens/SignUp.jsx';
 import Player from './screens/Player.jsx';
 import { Program, Programs } from './screens/Programs.jsx';
 import { Favourites, History } from './screens/MyLessons.jsx';
+import Lessons from './screens/Lessons.jsx';
+import FindLessons from './screens/FindLessons.jsx';
 
 const Ctx = createContext(null);
 export const useApp = () => useContext(Ctx);
 
-// Programs only (one-time purchases). Lessons are reached through programs, favourites and history.
-// Lessons.jsx / FindLessons.jsx / Paywall.jsx are kept but not routed for now.
+// Programs (one-time purchases) always; Lessons, Favourites and History when switched on in the plugin settings.
+// A section that is off has neither a tab nor a route. Paywall.jsx is kept but not routed (no subscriptions on the web).
 export function Tabs() {
+  if (!SECTIONS.lessons && !SECTIONS.favourites && !SECTIONS.history) return null; // Programs alone: no tab bar
   return (
     <nav className="bos-tabs">
       <NavLink to="/programs">Programs</NavLink>
-      <NavLink to="/favourites">Favourites</NavLink>
-      <NavLink to="/history">History</NavLink>
+      {SECTIONS.lessons && <NavLink to="/lessons">Lessons</NavLink>}
+      {SECTIONS.favourites && <NavLink to="/favourites">Favourites</NavLink>}
+      {SECTIONS.history && <NavLink to="/history">History</NavLink>}
     </nav>
   );
 }
@@ -102,8 +106,10 @@ export default function App() {
         <Route path="/programs" element={<Programs />} />
         <Route path="/program/:id" element={<Program />} />
         <Route path="/lesson/:id" element={<Player />} />
-        <Route path="/favourites" element={<Favourites />} />
-        <Route path="/history" element={<History />} />
+        {SECTIONS.lessons && <Route path="/lessons" element={<Lessons />} />}
+        {SECTIONS.lessons && <Route path="/find" element={<FindLessons />} />}
+        {SECTIONS.favourites && <Route path="/favourites" element={<Favourites />} />}
+        {SECTIONS.history && <Route path="/history" element={<History />} />}
         <Route path="/set-password" element={<SetPasswordPage />} />
         <Route path="*" element={<Navigate to="/programs" replace />} />
       </>

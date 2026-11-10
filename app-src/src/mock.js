@@ -44,7 +44,9 @@ const DATA = {
 const LIMITED = new URLSearchParams(location.search).has('limited');
 if (LIMITED) {
   DATA.data = { success: 1, free: '0', registered_date: '2025-01-01 00:00:00', purchased_packages: ['1'], appdata: DATA.data.appdata };
-  PROGRAMS.push({ id: '3', name: 'Easy shoulders', description: 'Release the neck and shoulders.', picture_thumb: pic('simp3', 200), user_position: 0, lessons: LESSONS.slice(0, 3) });
+  // Lesson 5 is only in program 3 (not bought) -> locked, leads to program 3; lesson 6 is in no program -> locked, no link.
+  LESSONS.push(lesson(5, 'Rolling to sitting', 5), lesson(6, 'Standing balance', 6));
+  PROGRAMS.push({ id: '3', name: 'Easy shoulders', description: 'Release the neck and shoulders.', picture_thumb: pic('simp3', 200), user_position: 0, lessons: [...LESSONS.slice(0, 3), LESSONS[4]] });
 }
 PROGRAMS.forEach(p => { p.purchased = LIMITED ? p.id === '1' : p.id === '2'; });
 
