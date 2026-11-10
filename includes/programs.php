@@ -20,12 +20,14 @@ add_filter('query_vars', function ($vars) {
 });
 
 add_action('init', function () {
-    $regex = '^' . BOS_LESSONS_PROGRAM_PAGE . '/([0-9]+)(?:-[^/]*)?/?$';
-    add_rewrite_rule($regex, 'index.php?pagename=' . BOS_LESSONS_PROGRAM_PAGE . '&bos_lessons_program=$matches[1]', 'top');
-    // Self-heal: if the stored rules lack ours (plugin replaced, rules rebuilt elsewhere), rebuild them.
-    // At most once an hour, so a plugin that keeps dropping it cannot cause a flush on every request.
+    $regex  = '^' . BOS_LESSONS_PROGRAM_PAGE . '/([0-9]+)(?:-[^/]*)?/?$';
+    $target = 'index.php?pagename=' . BOS_LESSONS_PROGRAM_PAGE . '&bos_lessons_program=$matches[1]';
+    add_rewrite_rule($regex, $target, 'top');
+    // Self-heal: if the stored rules lack ours or still carry an older target (plugin upgraded in place,
+    // rules rebuilt elsewhere), rebuild them. At most once an hour, so a plugin that keeps dropping it
+    // cannot cause a flush on every request.
     $rules = get_option('rewrite_rules');
-    if (is_array($rules) && !isset($rules[$regex]) && !get_transient('bos_lessons_rewrite_flushed')) {
+    if (is_array($rules) && (!isset($rules[$regex]) || $rules[$regex] !== $target) && !get_transient('bos_lessons_rewrite_flushed')) {
         set_transient('bos_lessons_rewrite_flushed', 1, HOUR_IN_SECONDS);
         flush_rewrite_rules(false);
     }

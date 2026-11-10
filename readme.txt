@@ -4,7 +4,7 @@ Tags: video lessons, audio lessons, woocommerce, yoga, online classes
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,6 +92,9 @@ Yes. The shortcodes work anywhere shortcodes do, and the thank-you box supports 
 
 == Changelog ==
 
+= 1.0.4 =
+* Fix: after upgrading from 1.0.2, program pages (/program/12-…/) showed the program list because WordPress kept the old rewrite rule. The plugin now rebuilds a stale rule by itself.
+
 = 1.0.3 =
 * Shortcodes are now `[bos_lessons_app]`, `[bos_lessons_programs]` and `[bos_lessons_program]`. The earlier short names are no longer registered: update the pages that use them.
 * The link between a product and a program is stored as `_bos_lessons_program_id`. Links saved by earlier versions keep working.
@@ -107,6 +110,9 @@ Yes. The shortcodes work anywhere shortcodes do, and the thank-you box supports 
 * First public release.
 
 == Upgrade Notice ==
+
+= 1.0.4 =
+Fixes program pages that showed the program list after upgrading from 1.0.2.
 
 = 1.0.3 =
 The shortcodes were renamed to [bos_lessons_app], [bos_lessons_programs] and [bos_lessons_program]. Update your pages after upgrading.
