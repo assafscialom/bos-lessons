@@ -1,4 +1,4 @@
-// Port of audio-app-en/src/apis for the browser.
+// API client for the browser.
 // Calls go through the WordPress proxy (the API sends no CORS headers).
 export const CFG = window.BOS_LESSONS || {};
 // Ends with '/'. May already contain '?' when WordPress uses plain permalinks (?rest_route=...).

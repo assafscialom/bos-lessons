@@ -25,7 +25,7 @@ export default function Lessons() {
     <div className="bos-page">
       <header className="bos-header">
         <div>
-          <p className="bos-eyebrow">Feldenkrais · Awareness Through Movement</p>
+          <p className="bos-eyebrow">Online lessons</p>
           <h2>Lessons</h2>
         </div>
         <button className="bos-link" onClick={logout}>Sign out</button>

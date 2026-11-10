@@ -2,9 +2,9 @@
 /**
  * Content from BOS, purchase through WooCommerce.
  *
- * - One WordPress page with slug "program" containing [bos_program] shows every program:
- *   /program/12-free-your-hip-joints/ (or /program/?bos_program=12).
- * - [bos_programs]: list of all BOS programs (image, name, description, price, View program / Buy Now).
+ * - One WordPress page with slug "program" containing [bos_lessons_program] shows every program:
+ *   /program/12-free-your-hip-joints/ (or /program/?bos_lessons_program=12).
+ * - [bos_lessons_programs]: list of all BOS programs (image, name, description, price, View program / Buy Now).
  * - A WooCommerce product linked to a program only holds the price; its page redirects to the program page.
  */
 
@@ -12,16 +12,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const BOS_LESSONS_PROGRAM_PAGE = 'program'; // slug of the page that holds [bos_program]
+const BOS_LESSONS_PROGRAM_PAGE = 'program'; // slug of the page that holds [bos_lessons_program]
 
 add_filter('query_vars', function ($vars) {
-    $vars[] = 'bos_program';
+    $vars[] = 'bos_lessons_program';
     return $vars;
 });
 
 add_action('init', function () {
     $regex = '^' . BOS_LESSONS_PROGRAM_PAGE . '/([0-9]+)(?:-[^/]*)?/?$';
-    add_rewrite_rule($regex, 'index.php?pagename=' . BOS_LESSONS_PROGRAM_PAGE . '&bos_program=$matches[1]', 'top');
+    add_rewrite_rule($regex, 'index.php?pagename=' . BOS_LESSONS_PROGRAM_PAGE . '&bos_lessons_program=$matches[1]', 'top');
     // Self-heal: if the stored rules lack ours (plugin replaced, rules rebuilt elsewhere), rebuild them.
     // At most once an hour, so a plugin that keeps dropping it cannot cause a flush on every request.
     $rules = get_option('rewrite_rules');
@@ -36,11 +36,11 @@ function bos_lessons_program_url($package_id, $name = '') {
     return home_url('/' . BOS_LESSONS_PROGRAM_PAGE . '/' . (int) $package_id . ($slug !== '' ? '-' . $slug : '') . '/');
 }
 
-// Program shown by [bos_program] without id: /program/12-…/ (query var), else the current product's program.
+// Program shown by [bos_lessons_program] without id: /program/12-…/ (query var), else the current product's program.
 function bos_lessons_current_program_id() {
-    $from_url = get_query_var('bos_program');
-    if ($from_url === '' && isset($_GET['bos_program'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only program id in the URL.
-        $from_url = sanitize_text_field(wp_unslash($_GET['bos_program'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    $from_url = get_query_var('bos_lessons_program');
+    if ($from_url === '' && isset($_GET['bos_lessons_program'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only program id in the URL.
+        $from_url = sanitize_text_field(wp_unslash($_GET['bos_lessons_program'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     }
     if (ctype_digit((string) $from_url)) {
         return (string) $from_url;
@@ -50,7 +50,7 @@ function bos_lessons_current_program_id() {
 
 // The program's name as the page title on /program/12-…/ (WordPress and Yoast SEO titles).
 function bos_lessons_program_title() {
-    $id = get_query_var('bos_program');
+    $id = get_query_var('bos_lessons_program');
     if (!ctype_digit((string) $id)) {
         return '';
     }
@@ -86,7 +86,7 @@ add_action('template_redirect', function () {
 });
 
 /**
- * [bos_programs]: every BOS program, with the price and Buy Now of its linked product.
+ * [bos_lessons_programs]: every BOS program, with the price and Buy Now of its linked product.
  */
 function bos_lessons_programs_shortcode() {
     $packages = bos_lessons_packages();
@@ -120,5 +120,4 @@ function bos_lessons_programs_shortcode() {
     }
     return $html . '</ul></div>';
 }
-add_shortcode('bos_programs', 'bos_lessons_programs_shortcode');
-add_shortcode('sim_programs', 'bos_lessons_programs_shortcode'); // legacy name
+add_shortcode('bos_lessons_programs', 'bos_lessons_programs_shortcode');

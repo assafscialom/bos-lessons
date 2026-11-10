@@ -2,8 +2,8 @@
 /**
  * Plugin Name: BOS Lessons
  * Plugin URI:  https://bos.work/plugin
- * Description: Sell video and audio lessons from your WordPress site. Embeds your BOS lesson library ([bos_app]), shows program pages ([bos_program], [bos_programs]) and opens programs bought through WooCommerce.
- * Version:     1.0.2
+ * Description: Sell video and audio lessons from your WordPress site. Embeds your BOS lesson library ([bos_lessons_app]), shows program pages ([bos_lessons_program], [bos_lessons_programs]) and opens programs bought through WooCommerce.
+ * Version:     1.0.3
  * Author:      IQDesk
  * Author URI:  https://bos.work
  * License:     GPL-2.0-or-later
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const BOS_LESSONS_VERSION = '1.0.2';
+const BOS_LESSONS_VERSION = '1.0.3';
 const BOS_LESSONS_OPTION  = 'bos_lessons';
 
 // Only these API endpoints can be reached through the proxy.
@@ -30,7 +30,7 @@ const BOS_LESSONS_ENDPOINTS = [
 
 /**
  * Settings, with wp-config.php constants as fallbacks (BOS_LESSONS_API_KEY, BOS_LESSONS_API_URL;
- * the legacy SIM_APP_WOO_SECRET / SIM_APP_API names from the Sense in Motion plugin still work).
+ * the SIM_APP_WOO_SECRET / SIM_APP_API names used before the first public release still work).
  */
 function bos_lessons_settings() {
     static $settings = null;
@@ -79,7 +79,6 @@ function bos_lessons_api_url() {
     return bos_lessons_settings()['api_url'];
 }
 
-// Where "All programs" links go: the setting, else the page that holds [bos_program(s)].
 // Logo on the sign-in screens: the setting, else the theme's site logo, else the site icon, else none.
 function bos_lessons_logo_url() {
     $url = bos_lessons_settings()['logo_url'];
@@ -92,6 +91,7 @@ function bos_lessons_logo_url() {
     return $url;
 }
 
+// Where "All programs" links go: the setting, else the page that holds [bos_lessons_program(s)].
 function bos_lessons_shop_url() {
     $url = bos_lessons_settings()['shop_url'];
     return $url !== '' ? $url : home_url('/' . (defined('BOS_LESSONS_PROGRAM_PAGE') ? BOS_LESSONS_PROGRAM_PAGE : 'program') . '/');
@@ -120,7 +120,7 @@ add_action('admin_init', function () {
     add_settings_section('bos_lessons_main', '', '__return_false', 'bos-lessons');
     $fields = [
         'api_key'  => [__('API key', 'bos-lessons'), __('From your BOS dashboard (Settings → WordPress). Required.', 'bos-lessons'), 'text'],
-        'shop_url' => [__('Programs page URL', 'bos-lessons'), __('Where "All programs" links go. Leave empty to use the page that holds [bos_programs].', 'bos-lessons'), 'url'],
+        'shop_url' => [__('Programs page URL', 'bos-lessons'), __('Where "All programs" links go. Leave empty to use the page that holds [bos_lessons_programs].', 'bos-lessons'), 'url'],
         'logo_url' => [__('Logo URL', 'bos-lessons'), __('Shown above the sign-in form. Leave empty to use your site logo or site icon.', 'bos-lessons'), 'url'],
         'api_url'  => [__('API URL', 'bos-lessons'), __('Leave empty unless BOS support gave you a different address.', 'bos-lessons'), 'url'],
     ];
@@ -152,9 +152,9 @@ function bos_lessons_settings_page() {
     do_settings_sections('bos-lessons');
     submit_button();
     echo '</form><h2>' . esc_html__('Shortcodes', 'bos-lessons') . '</h2><ul>'
-        . '<li><code>[bos_app]</code> — ' . esc_html__('the lesson library and player (one page).', 'bos-lessons') . '</li>'
-        . '<li><code>[bos_programs]</code> — ' . esc_html__('all programs with price and Buy Now.', 'bos-lessons') . '</li>'
-        . '<li><code>[bos_program id="12"]</code> — ' . esc_html__('one program page; without an id, the program linked to the current WooCommerce product.', 'bos-lessons') . '</li>'
+        . '<li><code>[bos_lessons_app]</code> — ' . esc_html__('the lesson library and player (one page).', 'bos-lessons') . '</li>'
+        . '<li><code>[bos_lessons_programs]</code> — ' . esc_html__('all programs with price and Buy Now.', 'bos-lessons') . '</li>'
+        . '<li><code>[bos_lessons_program id="12"]</code> — ' . esc_html__('one program page; without an id, the program linked to the current WooCommerce product.', 'bos-lessons') . '</li>'
         . '</ul></div>';
 }
 
@@ -180,12 +180,12 @@ add_action('before_woocommerce_init', function () {
 /* ---------- REST proxy ---------- */
 
 /**
- * /wp-json/bos/v1/proxy/<endpoint>
+ * /wp-json/bos-lessons/v1/proxy/<endpoint>
  * The BOS API sends no CORS headers, so the browser calls WordPress and WordPress calls BOS.
  * The account's API key goes along as a header; the endpoints authenticate the student with their own token.
  */
 add_action('rest_api_init', function () {
-    register_rest_route('bos/v1', '/proxy/(?P<endpoint>[A-Za-z]+)', [
+    register_rest_route('bos-lessons/v1', '/proxy/(?P<endpoint>[A-Za-z]+)', [
         'methods'             => ['GET', 'POST'],
         'permission_callback' => '__return_true',
         'callback'            => 'bos_lessons_proxy',
@@ -228,7 +228,7 @@ function bos_lessons_proxy(WP_REST_Request $request) {
     return $out;
 }
 
-/* ---------- [bos_app] ---------- */
+/* ---------- [bos_lessons_app] ---------- */
 
 function bos_lessons_app_shortcode() {
     if (bos_lessons_api_key() === '') {
@@ -246,7 +246,7 @@ function bos_lessons_app_shortcode() {
     wp_enqueue_style('bos-lessons', $base . 'bos-lessons.css', [], $ver);
     wp_enqueue_script('bos-lessons', $base . 'bos-lessons.js', [], $ver, true);
     wp_add_inline_script('bos-lessons', 'window.BOS_LESSONS = ' . wp_json_encode([
-        'apiBase'         => rest_url('bos/v1/proxy/'),
+        'apiBase'         => rest_url('bos-lessons/v1/proxy/'),
         'assetsUrl'       => $base,
         'companyId'       => (string) bos_lessons_company_id(),
         'siteName'        => get_bloginfo('name'),
@@ -258,8 +258,7 @@ function bos_lessons_app_shortcode() {
 
     return '<div id="bos-app"></div>';
 }
-add_shortcode('bos_app', 'bos_lessons_app_shortcode');
-add_shortcode('sim_app', 'bos_lessons_app_shortcode'); // legacy name
+add_shortcode('bos_lessons_app', 'bos_lessons_app_shortcode');
 
 // The Vite bundle is an ES module.
 add_filter('script_loader_tag', function ($tag, $handle) {

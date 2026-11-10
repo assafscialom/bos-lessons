@@ -2,10 +2,10 @@
 /**
  * WooCommerce <-> programs in the app.
  *
- * - Product edit screen: "Program in the app" (meta _bos_program_id), picked from the account's programs.
+ * - Product edit screen: "Program in the app" (meta _bos_lessons_program_id), picked from the account's programs.
  * - Paid / completed order: grants the bought programs to the billing email (BOS creates the student account if needed).
  * - Refunded / cancelled order: revokes them.
- * - [bos_program] shortcode: the program page from BOS, so it is not typed twice on the product page.
+ * - [bos_lessons_program] shortcode: the program page from BOS, so it is not typed twice on the product page.
  *
  * Server-to-server calls to BOS rest/woo are signed (HMAC) with the secret part of the API key.
  */
@@ -16,12 +16,18 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/package-page.php';
 require_once __DIR__ . '/programs.php';
-const BOS_LESSONS_PROGRAM_META = '_bos_program_id';
+const BOS_LESSONS_PROGRAM_META = '_bos_lessons_program_id';
+// Keys written by earlier versions and by the BOS dashboard's product sync. Read, never written.
+const BOS_LESSONS_LEGACY_PROGRAM_META = ['_bos_program_id', '_sim_package_id'];
 
-// Legacy product meta from the Sense in Motion plugin is still read.
 function bos_lessons_product_program_id($product_id) {
-    $id = get_post_meta($product_id, BOS_LESSONS_PROGRAM_META, true);
-    return $id !== '' ? $id : get_post_meta($product_id, '_sim_package_id', true);
+    foreach (array_merge([BOS_LESSONS_PROGRAM_META], BOS_LESSONS_LEGACY_PROGRAM_META) as $key) {
+        $id = get_post_meta($product_id, $key, true);
+        if ($id !== '') {
+            return $id;
+        }
+    }
+    return '';
 }
 
 // Fingerprint of the secret (never the secret), shown in error notes so support can compare keys.
@@ -38,7 +44,7 @@ function bos_lessons_woo_call(array $payload) {
     if (strlen($secret) < 32) {
         return new WP_Error('bos_no_key', __('The BOS API key is missing. Add it in Settings → BOS Lessons.', 'bos-lessons'));
     }
-    // app_url: where BOS points its "set your password" links (the page holding [bos_app]).
+    // app_url: where BOS points its "set your password" links (the page holding [bos_lessons_app]).
     $body      = wp_json_encode($payload + ['company_id' => bos_lessons_company_id(), 'app_url' => bos_lessons_page_url()]);
     $timestamp = (string) time();
     $response  = wp_remote_post(bos_lessons_api_url() . 'woo', [
@@ -77,7 +83,7 @@ function bos_lessons_buy_url($product) {
 // Safety net for cached pages and stale links: adding a program that is already in the cart is a
 // no-op instead of an error notice (which the block checkout never shows, but which makes Place Order fail).
 add_filter('woocommerce_add_to_cart_validation', function ($passed, $product_id) {
-    if ($passed && get_post_meta($product_id, '_bos_program_id', true) && WC()->cart
+    if ($passed && bos_lessons_product_program_id($product_id) !== '' && WC()->cart
         && WC()->cart->find_product_in_cart(WC()->cart->generate_cart_id($product_id))) {
         return false;
     }
@@ -152,9 +158,16 @@ add_action('woocommerce_process_product_meta', function ($product_id) {
     }
     $value = sanitize_text_field(wp_unslash($_POST[BOS_LESSONS_PROGRAM_META]));
     // phpcs:enable
+    if ($value !== '' && !ctype_digit($value)) {
+        return;
+    }
+    // The choice made here is the only link: drop the older keys so they cannot disagree with it.
+    foreach (BOS_LESSONS_LEGACY_PROGRAM_META as $legacy) {
+        delete_post_meta($product_id, $legacy);
+    }
     if ($value === '') {
         delete_post_meta($product_id, BOS_LESSONS_PROGRAM_META);
-    } elseif (ctype_digit($value)) {
+    } else {
         update_post_meta($product_id, BOS_LESSONS_PROGRAM_META, $value);
     }
 });
@@ -162,7 +175,7 @@ add_action('woocommerce_process_product_meta', function ($product_id) {
 /* ---------- Orders ---------- */
 
 function bos_lessons_order_granted(WC_Order $order) {
-    return $order->get_meta('_bos_granted') === 'yes' || $order->get_meta('_sim_granted') === 'yes';
+    return in_array('yes', [$order->get_meta('_bos_lessons_granted'), $order->get_meta('_bos_granted'), $order->get_meta('_sim_granted')], true); // the last two: older versions
 }
 
 function bos_lessons_order_package_ids(WC_Order $order) {
@@ -197,10 +210,10 @@ function bos_lessons_grant_order($order_id, $force = false) {
         $order->add_order_note('App programs NOT opened: ' . $result->get_error_message() . ' Use the order action "Open programs in the app" to retry.');
         return;
     }
-    $order->update_meta_data('_bos_granted', 'yes');
+    $order->update_meta_data('_bos_lessons_granted', 'yes');
     if (!empty($result['login_key'])) {
         // Signs the buyer in on the website from the thank-you page (bos_lessons_checkout_redirect); used once.
-        $order->update_meta_data('_bos_login_key', sanitize_text_field($result['login_key']));
+        $order->update_meta_data('_bos_lessons_login_key', sanitize_text_field($result['login_key']));
     }
     $order->save();
     $order->add_order_note(sprintf(
@@ -234,11 +247,11 @@ function bos_lessons_checkout_redirect() {
         bos_lessons_grant_order($order->get_id());
         $order = wc_get_order($order->get_id());
     }
-    $login_key = $order->get_meta('_bos_login_key');
+    $login_key = $order->get_meta('_bos_lessons_login_key');
     if (!$login_key) {
         return;
     }
-    $order->delete_meta_data('_bos_login_key');
+    $order->delete_meta_data('_bos_lessons_login_key');
     $order->save();
     wp_safe_redirect($app_url . '#/program/' . (int) $package_ids[0] . '?key=' . rawurlencode($login_key));
     exit;
@@ -258,6 +271,7 @@ function bos_lessons_revoke_order($order_id) {
         $order->add_order_note('App programs NOT closed: ' . $result->get_error_message());
         return;
     }
+    $order->delete_meta_data('_bos_lessons_granted');
     $order->delete_meta_data('_bos_granted');
     $order->delete_meta_data('_sim_granted');
     $order->save();
@@ -314,7 +328,7 @@ add_filter('render_block_woocommerce/order-confirmation-status', function ($html
 /* ---------- Product page content ---------- */
 
 /**
- * [bos_program] (current product's program) or [bos_program id="12"]:
+ * [bos_lessons_program] (current product's program) or [bos_lessons_program id="12"]:
  * - the program page from the BOS "Page on the website" blocks, followed by the "Extra content" (web_description);
  * - else the "Website description" alone; else the lesson list. show="lessons" forces the list.
  */
@@ -322,10 +336,10 @@ function bos_lessons_program_shortcode($atts) {
     $atts       = shortcode_atts(['id' => '', 'show' => 'auto'], $atts);
     $package_id = $atts['id'] !== '' ? $atts['id'] : bos_lessons_current_program_id();
     if (!ctype_digit((string) $package_id) && get_post_field('post_name', get_the_ID()) === BOS_LESSONS_PROGRAM_PAGE) {
-        return do_shortcode('[bos_programs]'); // the bare /program/ page: list the programs to choose from
+        return bos_lessons_programs_shortcode(); // the bare /program/ page: list the programs to choose from
     }
     if (!ctype_digit((string) $package_id)) {
-        return bos_lessons_editor_notice('Which program? On a regular page use [bos_program id="…"] with the program number from your BOS dashboard. Without an id it only works on a WooCommerce product linked to a program.');
+        return bos_lessons_editor_notice('Which program? On a regular page use [bos_lessons_program id="…"] with the program number from your BOS dashboard. Without an id it only works on a WooCommerce product linked to a program.');
     }
     $package = bos_lessons_package($package_id);
     if (is_wp_error($package)) {
@@ -354,8 +368,7 @@ function bos_lessons_program_shortcode($atts) {
     }
     return $html . '</ol>';
 }
-add_shortcode('bos_program', 'bos_lessons_program_shortcode');
-add_shortcode('sim_package', 'bos_lessons_program_shortcode'); // legacy name
+add_shortcode('bos_lessons_program', 'bos_lessons_program_shortcode');
 
 // Refresh the cached program content when a product is saved.
 add_action('save_post_product', function ($post_id) {
@@ -368,23 +381,22 @@ add_action('save_post_product', function ($post_id) {
 
 /* ---------- Helpers ---------- */
 
-// Explains an empty [bos_program] to logged-in editors only; visitors see nothing.
+// Explains an empty [bos_lessons_program] to logged-in editors only; visitors see nothing.
 function bos_lessons_editor_notice($message) {
     if (!current_user_can('edit_posts')) {
         return '';
     }
     return '<div style="border:2px dashed #c0392b;border-radius:8px;padding:12px 16px;margin:16px 0;background:#fdecea;color:#7a1d12;font-size:15px">'
-        . '<strong>[bos_program] (visible to editors only):</strong> ' . wp_kses($message, ['b' => []]) . '</div>';
+        . '<strong>[bos_lessons_program] (visible to editors only):</strong> ' . wp_kses($message, ['b' => []]) . '</div>';
 }
 
 /* ---------- Helpers for the web app ---------- */
 
-// URL of the page that holds [bos_app], for links back to the app.
+// URL of the page that holds [bos_lessons_app], for links back to the app.
 function bos_lessons_page_url() {
     $url = get_transient('bos_lessons_page_url');
     if ($url === false) {
-        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 's' => '[bos_app]', 'numberposts' => 1, 'fields' => 'ids'])
-            ?: get_posts(['post_type' => 'page', 'post_status' => 'publish', 's' => '[sim_app]', 'numberposts' => 1, 'fields' => 'ids']);
+        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 's' => '[bos_lessons_app]', 'numberposts' => 1, 'fields' => 'ids']);
         $url   = $pages ? get_permalink($pages[0]) : '';
         set_transient('bos_lessons_page_url', $url, DAY_IN_SECONDS);
     }

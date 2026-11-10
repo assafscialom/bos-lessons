@@ -1,7 +1,7 @@
 <?php
 /**
  * Removes the plugin's own data when it is deleted from WordPress.
- * Product links (_bos_program_id) and order notes are left in place: they are the site's records.
+ * Product links (_bos_lessons_program_id) and order notes are left in place: they are the site's records.
  */
 
 if (!defined('WP_UNINSTALL_PLUGIN')) {
