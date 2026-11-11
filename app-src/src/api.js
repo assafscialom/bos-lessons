@@ -10,9 +10,10 @@ export const PACKAGE_PRODUCTS = CFG.packageProducts || {};
 export const SHOP_URL = CFG.shopUrl || '/';
 export const buyUrl = packageId => PACKAGE_PRODUCTS[String(packageId)] || SHOP_URL;
 // Sections besides Programs, from Settings → BOS Lessons. Defaults match the plugin's (installs before 1.0.5).
-// Dev only: ?sections=lessons,history overrides them, to try each combination with ?mock.
-const devSections = import.meta.env.DEV && new URLSearchParams(location.search).get('sections');
-export const SECTIONS = devSections != null
+// Dev only: ?sections=lessons,history overrides them, to try each combination with ?mock. In a build DEV is false,
+// devSections is null and the override is removed as dead code (an earlier `DEV && …` gave false and crashed on .split).
+const devSections = import.meta.env.DEV ? new URLSearchParams(location.search).get('sections') : null;
+export const SECTIONS = typeof devSections === 'string'
   ? Object.fromEntries(['lessons', 'favourites', 'history'].map(k => [k, devSections.split(',').includes(k)]))
   : { lessons: false, favourites: true, history: true, ...CFG.sections };
 
