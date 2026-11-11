@@ -3,7 +3,7 @@
  * Plugin Name: BOS Lessons
  * Plugin URI:  https://bos.work/plugin
  * Description: Sell video and audio lessons from your WordPress site. Embeds your BOS lesson library ([bos_lessons_app]), shows program pages ([bos_lessons_program], [bos_lessons_programs]) and opens programs bought through WooCommerce.
- * Version:     1.0.5
+ * Version:     1.0.6
  * Author:      IQDesk
  * Author URI:  https://bos.work
  * License:     GPL-2.0-or-later
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const BOS_LESSONS_VERSION = '1.0.5';
+const BOS_LESSONS_VERSION = '1.0.6';
 const BOS_LESSONS_OPTION  = 'bos_lessons';
 // Optional sections of the web app besides Programs (always shown). Defaults = the behaviour before 1.0.5.
 const BOS_LESSONS_SECTIONS = ['lessons' => false, 'favourites' => true, 'history' => true];

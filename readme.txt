@@ -4,7 +4,7 @@ Tags: video lessons, audio lessons, woocommerce, yoga, online classes
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,6 +92,9 @@ Yes. The shortcodes work anywhere shortcodes do, and the thank-you box supports 
 
 == Changelog ==
 
+= 1.0.6 =
+* Fix: in 1.0.5 the lesson app ([bos_lessons_app]) did not load (a script error left the page empty). Update if you run 1.0.5.
+
 = 1.0.5 =
 * New setting "Sections in the app" (Settings → BOS Lessons): choose which tabs [bos_lessons_app] shows besides Programs: Lessons, Favourites, History. Defaults keep the earlier behaviour (Favourites and History on, Lessons off).
 * Lessons section: every lesson, with search and a find-by-position page. Lessons outside the student's programs are shown locked and open their program page, where the program can be bought.
@@ -115,6 +118,9 @@ Yes. The shortcodes work anywhere shortcodes do, and the thank-you box supports 
 * First public release.
 
 == Upgrade Notice ==
+
+= 1.0.6 =
+Fixes the lesson app not loading in 1.0.5. Includes the 1.0.5 setting for the app's sections.
 
 = 1.0.5 =
 Adds a setting to show a Lessons tab, and to hide Favourites or History. Nothing changes until you change the setting.
